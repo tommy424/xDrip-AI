@@ -92,4 +92,20 @@ public abstract class Insulin {
     public double calculateActivityContribution(final long time, final double doseUnits) {
         return doseUnits * Math.abs(calculateActivity(time));
     }
+
+    /**
+     * Dose-aware IOB contribution with optional duration override (minutes).
+     * Base implementation ignores the override to preserve legacy behavior.
+     */
+    public double calculateIOBContribution(final long time, final double doseUnits, final double durationOverrideMinutes) {
+        return calculateIOBContribution(time, doseUnits);
+    }
+
+    /**
+     * Dose-aware activity contribution with optional duration override (minutes).
+     * Base implementation ignores the override to preserve legacy behavior.
+     */
+    public double calculateActivityContribution(final long time, final double doseUnits, final double durationOverrideMinutes) {
+        return calculateActivityContribution(time, doseUnits);
+    }
 }
