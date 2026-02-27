@@ -853,11 +853,11 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
 
 
     private static String format_carb_ratio(String oldValue, String newValue) {
-        return oldValue.replaceAll(" \\(.*\\)$", "") + "  (" + newValue + "g per Unit)";
+        return oldValue.replaceAll("  \\(.*\\)$", "") + "  (" + newValue + "g per Unit)";
     }
 
     private static String format_carb_absorption_rate(String oldValue, String newValue) {
-        return oldValue.replaceAll(" \\(.*\\)$", "") + "  (" + newValue + "g per hour)";
+        return oldValue.replaceAll("  \\(.*\\)$", "") + "  (" + newValue + "g per hour)";
     }
 
     private static String format_insulin_sensitivity(String oldValue, String newValue) {
@@ -897,6 +897,27 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                             .getString(preference.getKey(), ""));
         } catch (Exception e) {
             Log.e(TAG, "Got exception binding preference summary: " + e.toString());
+        }
+    }
+
+    private static void bindPreferenceSummaryToValueAndRefreshPrediction(Preference preference, SharedPreferences prefs) {
+        try {
+            preference.setOnPreferenceChangeListener((pref, value) -> {
+                if (!sBindPreferenceSummaryToValueListener.onPreferenceChange(pref, value)) {
+                    return false;
+                }
+                // Persist before reloading Profile so predictive simulation reads the new value immediately.
+                prefs.edit().putString(pref.getKey(), value.toString()).apply();
+                Profile.reloadPreferences(prefs);
+                Home.staticRefreshBGCharts();
+                return true;
+            });
+            sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
+                    PreferenceManager
+                            .getDefaultSharedPreferences(preference.getContext())
+                            .getString(preference.getKey(), ""));
+        } catch (Exception e) {
+            Log.e(TAG, "Got exception binding predictive preference summary: " + e.toString());
         }
     }
 
@@ -1285,6 +1306,8 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                         return false;
                     }
                     preference.setTitle(format_carb_absorption_rate(preference.getTitle().toString(), newValue.toString()));
+                    // Persist before reload to avoid applying the previous value on first change.
+                    AllPrefsFragment.this.prefs.edit().putString(preference.getKey(), newValue.toString()).apply();
                     Profile.reloadPreferences(AllPrefsFragment.this.prefs);
                     Home.staticRefreshBGCharts();
                     return true;
@@ -1805,9 +1828,9 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                 this.prefs.edit().putString("custom_sync_key", CipherUtils.getRandomHexKey()).apply();
             }
 
-            bindPreferenceSummaryToValue(findPreference("xplus_insulin_dia"));
-            bindPreferenceSummaryToValue(findPreference("xplus_liver_sensitivity"));
-            bindPreferenceSummaryToValue(findPreference("xplus_liver_maximpact"));
+            bindPreferenceSummaryToValueAndRefreshPrediction(findPreference("xplus_insulin_dia"), this.prefs);
+            bindPreferenceSummaryToValueAndRefreshPrediction(findPreference("xplus_liver_sensitivity"), this.prefs);
+            bindPreferenceSummaryToValueAndRefreshPrediction(findPreference("xplus_liver_maximpact"), this.prefs);
 
             bindPreferenceSummaryToValue(findPreference("low_predict_alarm_level"));
             Profile.validateTargetRange();
