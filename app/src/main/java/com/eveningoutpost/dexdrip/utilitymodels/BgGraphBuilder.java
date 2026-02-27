@@ -1823,114 +1823,97 @@ public class BgGraphBuilder {
                     if (d)
                         Log.d(TAG, "initial Fuzzed start timestamp: " + android.text.format.DateFormat.format("yyyy-MM-dd HH:mm:ss", (long) start_time * FUZZER));
                     if ((iobinfo != null) && (prediction_enabled) && (simulation_enabled)) {
-
-                        double predict_weight = 0.1;
                         boolean iob_shown_already = false;
-                        for (Iob iob : iobinfo) {
+                        final val polyForPrediction = poly;
+                        final PredictiveSimulationEngine.MomentumPredictor momentumPredictor =
+                                (polyForPrediction == null) ? null : new PredictiveSimulationEngine.MomentumPredictor() {
+                                    @Override
+                                    public double predict(long timestampMs) {
+                                        return polyForPrediction.predict(timestampMs);
+                                    }
+                                };
 
-                            //double activity = iob.activity;
-                            if ((iob.iob > 0) || (iob.cob > 0) || (iob.jActivity > 0) || (iob.jCarbImpact > 0)) {
-                                fuzzed_timestamp = iob.timestamp / FUZZER;
-                                if (d) Log.d(TAG, "iob timestamp: " + iob.timestamp);
-                                if (iob.iob > Profile.minimum_shown_iob) {
-                                    double height = iob.iob * iobscale;
-                                    if (height > cob_insulin_max_draw_value)
-                                        height = cob_insulin_max_draw_value;
-                                    float yPosition = (float) height;
-                                    yPosition = clampNonGlucoseY(yPosition + windowBottomOffset);
-                                    PointValue pv = new HPointValue((double) fuzzed_timestamp, yPosition);
-                                    iobValues.add(pv);
-                                    double activityheight = iob.jActivity * 3; // currently scaled by profile
-                                    if (activityheight > cob_insulin_max_draw_value)
-                                        activityheight = cob_insulin_max_draw_value;
-                                    yPosition = (float) activityheight;
-                                    yPosition = clampNonGlucoseY(yPosition + windowBottomOffset);
-                                    PointValue av = new HPointValue((double) fuzzed_timestamp, yPosition);
-                                    activityValues.add(av);
-                                }
+                        final PredictiveSimulationEngine.Result simulationResult =
+                                PredictiveSimulationEngine.run(iobinfo, lasttimestamp, predictedbg, predict_use_momentum, momentumPredictor, FUZZER);
 
-                                if (iob.cob > 0) {
-                                    double height = iob.cob * cobscale;
-                                    if (height > cob_insulin_max_draw_value)
-                                        height = cob_insulin_max_draw_value;
-                                    float yPosition = (float) height;
-                                    yPosition = clampNonGlucoseY(yPosition + windowBottomOffset);
-                                    PointValue pv = new HPointValue((double) fuzzed_timestamp, yPosition);
+                        for (PredictiveSimulationEngine.Step step : simulationResult.steps) {
+                            fuzzed_timestamp = step.timestampFuzzed;
+                            if (d) Log.d(TAG, "iob timestamp: " + step.timestampMs);
+
+                            if (step.iob > Profile.minimum_shown_iob) {
+                                double height = step.iob * iobscale;
+                                if (height > cob_insulin_max_draw_value)
+                                    height = cob_insulin_max_draw_value;
+                                float yPosition = (float) height;
+                                yPosition = clampNonGlucoseY(yPosition + windowBottomOffset);
+                                PointValue pv = new HPointValue((double) fuzzed_timestamp, yPosition);
+                                iobValues.add(pv);
+
+                                double activityheight = step.insulinImpact * 3; // currently scaled by profile
+                                if (activityheight > cob_insulin_max_draw_value)
+                                    activityheight = cob_insulin_max_draw_value;
+                                yPosition = (float) activityheight;
+                                yPosition = clampNonGlucoseY(yPosition + windowBottomOffset);
+                                PointValue av = new HPointValue((double) fuzzed_timestamp, yPosition);
+                                activityValues.add(av);
+                            }
+
+                            if (step.cob > 0) {
+                                double height = step.cob * cobscale;
+                                if (height > cob_insulin_max_draw_value)
+                                    height = cob_insulin_max_draw_value;
+                                float yPosition = (float) height;
+                                yPosition = clampNonGlucoseY(yPosition + windowBottomOffset);
+                                PointValue pv = new HPointValue((double) fuzzed_timestamp, yPosition);
+                                if (d)
+                                    Log.d(TAG, "Cob total record: " + JoH.qs(height) + " " + JoH.qs(step.cob) + " " + Double.toString(pv.getY()) + " @ timestamp: " + Long.toString(step.timestampMs));
+                                cobValues.add(pv); // warning should not be hardcoded
+                            }
+
+                            if (step.futurePredictionStep) {
+                                if (step.hasPolyPrediction) {
+                                    final double polyPredict = step.polyPrediction;
                                     if (d)
-                                        Log.d(TAG, "Cob total record: " + JoH.qs(height) + " " + JoH.qs(iob.cob) + " " + Double.toString(pv.getY()) + " @ timestamp: " + Long.toString(iob.timestamp));
-                                    cobValues.add(pv); // warning should not be hardcoded
-                                }
-
-                                // momentum curve
-                                // do we actually need to calculate this within the loop - can we use only the last datum?
-                                if (fuzzed_timestamp > (lasttimestamp)) {
-                                    double polyPredict = 0;
-                                    if (poly != null) {
-                                        try {
-                                            polyPredict = poly.predict(iob.timestamp);
-                                            if (d)
-                                                Log.d(TAG, "Poly predict: " + JoH.qs(polyPredict) + " @ " + JoH.dateTimeText(iob.timestamp));
-                                            if (show_moment_working_line) {
-                                                if (((polyPredict < highMark) || (polyPredict < initial_predicted_bg)) && (polyPredict > 0)) {
-                                                    PointValue zv = new HPointValue((double) fuzzed_timestamp, (float) polyPredict);
-                                                    polyBgValues.add(zv);
-                                                }
-                                            }
-                                        } catch (Exception e) {
-                                            Log.e(TAG, "Got exception with poly predict: " + e.toString());
+                                        Log.d(TAG, "Poly predict: " + JoH.qs(polyPredict) + " @ " + JoH.dateTimeText(step.timestampMs));
+                                    if (show_moment_working_line) {
+                                        if (((polyPredict < highMark) || (polyPredict < initial_predicted_bg)) && (polyPredict > 0)) {
+                                            PointValue zv = new HPointValue((double) fuzzed_timestamp, (float) polyPredict);
+                                            polyBgValues.add(zv);
                                         }
                                     }
-                                    if (d)
-                                        Log.d(TAG, "Processing prediction: before: " + JoH.qs(predictedbg) + " activity: " + JoH.qs(iob.jActivity) + " jcarbimpact: " + JoH.qs(iob.jCarbImpact));
-                                    predictedbg -= iob.jActivity; // lower bg by current insulin activity
-                                    predictedbg += iob.jCarbImpact;
-
-                                    double predictedbg_final = predictedbg;
-                                    // add momentum characteristics if we have them
-                                    final boolean momentum_smoothing = true;
-                                    if ((predict_use_momentum) && (polyPredict > 0)) {
-                                        predictedbg_final = ((predictedbg * predict_weight) + polyPredict) / (predict_weight + 1);
-                                        if (momentum_smoothing) predictedbg = predictedbg_final;
-
-                                        if (d)
-                                            Log.d(TAG, "forecast predict_weight: " + JoH.qs(predict_weight));
-                                    }
-                                    predict_weight = predict_weight * 2.5; // from 0-infinity - // TODO account for step!!!
-                                    // we should pull in actual graph upper and lower limits here
+                                }
+                                if (step.hasPredictedBg) {
+                                    final double predictedbg_final = step.predictedBg;
                                     if (((predictedbg_final < cob_insulin_max_draw_value) || (predictedbg_final < relaxed_predicted_bg_limit)) && (predictedbg_final > 0)) {
                                         PointValue zv = new HPointValue((double) fuzzed_timestamp, (float) predictedbg_final);
                                         predictedBgValues.add(zv);
                                     }
                                 }
-                                if (fuzzed_timestamp > end_time) {
-                                    predictivehours = (int) (((fuzzed_timestamp - end_time) * FUZZER) / (1000 * 60 * 60)) + 1; // round up to nearest future hour - timestamps in minutes here
-                                    if (d)
-                                        Log.d(TAG, "Predictive hours updated to: " + predictivehours);
-                                } else {
-                                    //KS Log.d(TAG, "IOB DEBUG: " + (fuzzed_timestamp - end_time) + " " + iob.iob);
-                                    if (!iob_shown_already && (Math.abs(fuzzed_timestamp - end_time) < ((Constants.MINUTE_IN_MS * 5) / FUZZER)) && (iob.iob > 0)) {
-                                        iob_shown_already = true;
-                                        // show current iob
-                                        //  double position = 12.4 * bgScale; // this is for mmol - needs generic for mg/dl
-                                        //  if (Math.abs(predictedbg - position) < (2 * bgScale)) {
-                                        //      position = 7.0 * bgScale;
-                                        //  }
-
-                                        // PointValue iv = new HPointValue((double) fuzzed_timestamp, (float) position);
-                                        DecimalFormat df = new DecimalFormat("#");
-                                        df.setMaximumFractionDigits(2);
-                                        df.setMinimumIntegerDigits(1);
-                                        //  iv.setLabel("IoB: " + df.format(iob.iob));
-                                        val iobformatted = df.format(iob.iob);
-                                        keyStore.putS("last_iob", iobformatted);
-                                        keyStore.putL("last_iob_timestamp", JoH.tsl());
-                                        Home.updateStatusLine("iob", iobformatted);
-                                        //  annotationValues.add(iv); // needs to be different value list so we can make annotation nicer
-
-                                    }
-                                }
-
                             }
+
+                            if (fuzzed_timestamp > end_time) {
+                                predictivehours = (int) (((fuzzed_timestamp - end_time) * FUZZER) / (1000 * 60 * 60)) + 1; // round up to nearest future hour - timestamps in minutes here
+                                if (d)
+                                    Log.d(TAG, "Predictive hours updated to: " + predictivehours);
+                            } else {
+                                //KS Log.d(TAG, "IOB DEBUG: " + (fuzzed_timestamp - end_time) + " " + step.iob);
+                                if (!iob_shown_already && (Math.abs(fuzzed_timestamp - end_time) < ((Constants.MINUTE_IN_MS * 5) / FUZZER)) && (step.iob > 0)) {
+                                    iob_shown_already = true;
+
+                                    DecimalFormat df = new DecimalFormat("#");
+                                    df.setMaximumFractionDigits(2);
+                                    df.setMinimumIntegerDigits(1);
+                                    val iobformatted = df.format(step.iob);
+                                    keyStore.putS("last_iob", iobformatted);
+                                    keyStore.putL("last_iob_timestamp", JoH.tsl());
+                                    Home.updateStatusLine("iob", iobformatted);
+                                }
+                            }
+                        }
+
+                        predictedbg = simulationResult.finalPredictedBg;
+                        if (simulationResult.lastFuzzedTimestamp > 0) {
+                            fuzzed_timestamp = simulationResult.lastFuzzedTimestamp;
                         }
                         if (d)
                             Log.i(TAG, "Size of iob: " + Integer.toString(iobinfo.size()) + " Predictive hours: " + Integer.toString(predictivehours)
@@ -2468,7 +2451,6 @@ public class BgGraphBuilder {
                     real_timestamp = ((HPointValue) pointValue).getTimeStamp();
                 }
             }
-
             final java.text.DateFormat timeFormat = DateFormat.getTimeFormat(context);
             //Won't give the exact time of the reading but the time on the grid: close enough.
             final Long time = (real_timestamp > 0) ? real_timestamp : ((long) pointValue.getX()) * FUZZER; // TODO last clause should never be used now
