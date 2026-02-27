@@ -1846,7 +1846,8 @@ public class BgGraphBuilder {
                                     height = cob_insulin_max_draw_value;
                                 float yPosition = (float) height;
                                 yPosition = clampNonGlucoseY(yPosition + windowBottomOffset);
-                                PointValue pv = new HPointValue((double) fuzzed_timestamp, yPosition);
+                                PointValue pv = new HPointValue((double) fuzzed_timestamp, yPosition)
+                                        .setCustomTooltip("IoB: " + JoH.qs(step.iob, 2) + " U");
                                 iobValues.add(pv);
 
                                 double activityheight = step.insulinImpact * 3; // currently scaled by profile
@@ -1854,7 +1855,8 @@ public class BgGraphBuilder {
                                     activityheight = cob_insulin_max_draw_value;
                                 yPosition = (float) activityheight;
                                 yPosition = clampNonGlucoseY(yPosition + windowBottomOffset);
-                                PointValue av = new HPointValue((double) fuzzed_timestamp, yPosition);
+                                PointValue av = new HPointValue((double) fuzzed_timestamp, yPosition)
+                                        .setCustomTooltip("Insulin impact: -" + JoH.qs(step.insulinImpact, 1) + " " + unit());
                                 activityValues.add(av);
                             }
 
@@ -1864,7 +1866,8 @@ public class BgGraphBuilder {
                                     height = cob_insulin_max_draw_value;
                                 float yPosition = (float) height;
                                 yPosition = clampNonGlucoseY(yPosition + windowBottomOffset);
-                                PointValue pv = new HPointValue((double) fuzzed_timestamp, yPosition);
+                                PointValue pv = new HPointValue((double) fuzzed_timestamp, yPosition)
+                                        .setCustomTooltip("COB: " + JoH.qs(step.cob, 1) + " g");
                                 if (d)
                                     Log.d(TAG, "Cob total record: " + JoH.qs(height) + " " + JoH.qs(step.cob) + " " + Double.toString(pv.getY()) + " @ timestamp: " + Long.toString(step.timestampMs));
                                 cobValues.add(pv); // warning should not be hardcoded
@@ -2451,6 +2454,13 @@ public class BgGraphBuilder {
                     real_timestamp = ((HPointValue) pointValue).getTimeStamp();
                 }
             }
+            if (alternate.length() == 0 && pointValue instanceof HPointValue) {
+                final String customTooltip = ((HPointValue) pointValue).getCustomTooltip();
+                if (customTooltip != null && customTooltip.length() > 0) {
+                    alternate = customTooltip;
+                }
+            }
+
             final java.text.DateFormat timeFormat = DateFormat.getTimeFormat(context);
             //Won't give the exact time of the reading but the time on the grid: close enough.
             final Long time = (real_timestamp > 0) ? real_timestamp : ((long) pointValue.getX()) * FUZZER; // TODO last clause should never be used now

@@ -13,6 +13,7 @@ import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class HPointValue extends PointValue {
+    private String customTooltip;
 
     public HPointValue set(double x, double y) {
         super.set(x, y);
@@ -29,6 +30,15 @@ public class HPointValue extends PointValue {
 
     public long getTimeStamp() {
         return (long) (getX() * FUZZER);
+    }
+
+    public HPointValue setCustomTooltip(final String customTooltip) {
+        this.customTooltip = customTooltip;
+        return this;
+    }
+
+    public String getCustomTooltip() {
+        return customTooltip;
     }
 
 }
