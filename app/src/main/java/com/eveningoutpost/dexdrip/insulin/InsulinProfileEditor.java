@@ -10,6 +10,7 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 
 import com.eveningoutpost.dexdrip.BaseAppCompatActivity;
+import com.eveningoutpost.dexdrip.Home;
 import com.eveningoutpost.dexdrip.R;
 import com.eveningoutpost.dexdrip.models.JoH;
 
@@ -136,6 +137,7 @@ public class InsulinProfileEditor extends BaseAppCompatActivity {
 
     public void profileSaveButton(View myview) {
         InsulinManager.saveDisabledProfilesToPrefs();
+        Home.staticRefreshBGChartsOnIdle();
         finish();
     }
 

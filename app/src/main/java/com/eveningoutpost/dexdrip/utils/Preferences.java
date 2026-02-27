@@ -1833,6 +1833,13 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
             bindPreferenceSummaryToValueAndRefreshPrediction(findPreference("xplus_liver_maximpact"), this.prefs);
             bindPreferenceSummaryToValueAndRefreshPrediction(findPreference("fiasp_weibull_weight_kg"), this.prefs);
             bindPreferenceSummaryToValueAndRefreshPrediction(findPreference("fiasp_weibull_dose_scale_u_per_kg_per_unit"), this.prefs);
+            final Preference basalActivityPreference = findPreference("multiple_insulin_use_basal_activity");
+            if (basalActivityPreference != null) {
+                basalActivityPreference.setOnPreferenceChangeListener((preference, newValue) -> {
+                    Home.staticRefreshBGCharts();
+                    return true;
+                });
+            }
 
             bindPreferenceSummaryToValue(findPreference("low_predict_alarm_level"));
             Profile.validateTargetRange();
