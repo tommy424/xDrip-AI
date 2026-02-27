@@ -1,0 +1,20 @@
+android {
+    buildTypes {
+        debug {
+            applicationIdSuffix ".local"
+            versionNameSuffix "-debug-local"
+        }
+        dev {
+            applicationIdSuffix ".local"
+            versionNameSuffix "-dev-local"
+        }
+    }
+}
+
+// Local side-by-side test builds use a different applicationId, which won't match
+// the checked-in google-services.json package name.
+tasks.configureEach { t ->
+    if (t.name ==~ /process.*(Debug|Dev)GoogleServices/) {
+        t.enabled = false
+    }
+}
