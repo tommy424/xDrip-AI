@@ -845,8 +845,8 @@
     <string name="notify_data_arrives_master"><![CDATA[Notify when data arrives from the master if the interval is > 20 mins.]]></string>
     <string name="follower_chime_new">Follower Chime New</string>
     <string name="carb_ratio">Carb Ratio</string>
-    <string name="enable_dedicated_insulin_profiles">Config Insulin profiles</string>
-    <string name="desc_enable_dedicated_insulin_profiles">Here one can enable or configure various insulin profiles</string>
+    <string name="enable_dedicated_insulin_profiles">Select insulin profiles</string>
+    <string name="desc_enable_dedicated_insulin_profiles">Choose insulin curve profiles for prediction modeling</string>
     <string name="insulin_sensitivity">Insulin Sensitivity</string>
     <string name="secondary_plugin_glucose_value">Secondary plugin value</string>
     <string name="step_counter_1st_color">Step counter 1st color</string>
@@ -1757,9 +1757,9 @@
     <string name="title_illustrate_remote_data">Illustrate remote data</string>
     <string name="summary_show_accessibility_settings">If your phone has Always On Display you can enable the xDrip widget there by enabling the xDrip accessibility service from the Android System Settings page.</string>
     <string name="title_show_accessibility_settings">Enable xDrip Accessibility</string>
-    <string name="title_multiple_insulin_types_settings">Multiple Insulin Types</string>
-    <string name="summary_multiple_insulin_types_settings">Options for working with multiple insulin types</string>
-    <string name="title_multiple_insulin_types">Multiple Insulin Types</string>
+    <string name="title_multiple_insulin_types_settings">Insulin Profile Selection</string>
+    <string name="summary_multiple_insulin_types_settings">Configure insulin profile curves and selection behavior</string>
+    <string name="title_multiple_insulin_types">Enable Multiple Insulin Types</string>
     <string name="summary_multiple_insulin_use_basal_activity">Plot Basal activity on graph and incorporate in predictive model</string>
     <string name="title_multiple_insulin_use_basal_activity">Use Basal Activity</string>
     <string name="title_xdrip_plus_snooze_broadcast">Local Broadcast</string>

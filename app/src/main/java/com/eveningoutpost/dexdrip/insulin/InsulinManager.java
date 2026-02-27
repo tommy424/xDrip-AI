@@ -228,6 +228,20 @@ public class InsulinManager {
         return ret;
     }
 
+    public static int getEnabledProfileCount() {
+        return countEnabledProfiles();
+    }
+
+    public static Insulin getFirstEnabledProfile() {
+        checkInitialized();
+        for (Insulin ins : profiles) {
+            if (isProfileEnabled(ins)) {
+                return ins;
+            }
+        }
+        return null;
+    }
+
     public static void LoadDisabledProfilesFromPrefs() {
         checkInitialized();
         for (Insulin i : profiles)

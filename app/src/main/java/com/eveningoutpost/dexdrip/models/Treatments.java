@@ -236,7 +236,7 @@ public class Treatments extends Model {
 
     public static synchronized Treatments create(final double carbs, final double insulinSum, final long timestamp, final String suggested_uuid) {
 
-        if (MultipleInsulins.isEnabled()) {
+        if (MultipleInsulins.useProfileModeling()) {
             return create(carbs, insulinSum, convertLegacyDoseToBolusInjectionList(insulinSum), timestamp, suggested_uuid);
         } else {
             return create(carbs, insulinSum, null, timestamp, suggested_uuid);
@@ -938,7 +938,7 @@ public class Treatments extends Model {
     private static Iob calcTreatment(final Treatments treatment, final long time, final boolean useBasal) {
         final Iob response = new Iob();
 
-        if (MultipleInsulins.isEnabled()) {
+        if (MultipleInsulins.useProfileModeling()) {
             Pair<Double,Double> result = calculateIobActivityFromTreatmentAtTime(treatment, time, useBasal);
             response.iob = result.first;
             response.jActivity = result.second;
@@ -996,11 +996,12 @@ public class Treatments extends Model {
        // Log.d(TAG, "Processing iobforgraph2: main  ");
         JoH.benchmark_method_start();
         final boolean multipleInsulins = MultipleInsulins.isEnabled();
-        final boolean useBasal = MultipleInsulins.useBasalActivity();
+        final boolean useProfileModeling = MultipleInsulins.useProfileModeling();
+        final boolean useBasal = useProfileModeling && MultipleInsulins.useBasalActivity();
         // number param currently ignored
 
         // 10 hours max look or from insulin manager if enabled
-        final double dontLookThisFar = MultipleInsulins.isEnabled() ? MINUTE_IN_MS * InsulinManager.getMaxEffect(true) : 10 * HOUR_IN_MS;
+        final double dontLookThisFar = useProfileModeling ? MINUTE_IN_MS * InsulinManager.getMaxEffect(true) : 10 * HOUR_IN_MS;
 // look back the longest effect period of all enabled insulin profiles (startTime is always 24h behind NOW)
         List<Treatments> theTreatments = latestForGraph(2000, startTime - dontLookThisFar);
         Log.d(TAG,"TREATMENT LIST: "+theTreatments.size()+" "+JoH.dateTimeText((long)(startTime - dontLookThisFar)));
@@ -1051,7 +1052,7 @@ public class Treatments extends Model {
         } // per insulin treatment
 
         // legacy jActivity calculation
-        if (!multipleInsulins) {
+        if (!useProfileModeling) {
             Log.d(TAG, "Single insulin type iteration counter: " + counter);
 
             // evaluate insulin impact
