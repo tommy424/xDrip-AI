@@ -71,8 +71,8 @@ public class BlueJayRemote {
             intent.putExtra(ThinJamApiReceiver.API_BYTES, bytes);
         }
 
-        // TODO set destination package
-        intent.setPackage("com.eveningoutpost.dexdrip");
+        // Keep broadcasts inside the currently running app package (works for side-by-side builds).
+        intent.setPackage(getAppContext().getPackageName());
 
         intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
         getAppContext().sendBroadcast(intent);
