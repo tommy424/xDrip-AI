@@ -1779,27 +1779,25 @@ public class BgGraphBuilder {
 
                     // we need to check we actually have sufficient data for this
                     double predictedbg = -1000;
-                    BgReading mylastbg = bgReadings.get(0);
                     long lasttimestamp = 0;
+                    boolean hasPredictionAnchor = false;
 
                     // this can be optimised to oncreate and onchange
                     Profile.reloadPreferencesIfNeeded(prefs); // TODO handle this better now we use profile time blocks
 
 
                     try {
-                        if (mylastbg != null) {
-                            if (doMgdl) {
-                                predictedbg = mylastbg.calculated_value;
-                            } else {
-                                predictedbg = mylastbg.calculated_value_mmol();
+                        final PredictionAnchor anchor = getLatestPredictionAnchor();
+                        if (anchor != null) {
+                            predictedbg = anchor.inDisplayUnits(doMgdl);
+                            lasttimestamp = anchor.timestampMs / FUZZER;
+                            hasPredictionAnchor = true;
+                            if (d) {
+                                Log.d(TAG, "Starting prediction with " + anchor.source + " bg of: " + JoH.qs(predictedbg)
+                                        + " secs ago: " + (JoH.ts() - anchor.timestampMs) / 1000);
                             }
-                            //if (d) Log.d(TAG, "Starting prediction with bg of: " + JoH.qs(predictedbg));
-                            lasttimestamp = mylastbg.timestamp / FUZZER;
-
-                            if (d)
-                                Log.d(TAG, "Starting prediction with bg of: " + JoH.qs(predictedbg) + " secs ago: " + (JoH.ts() - mylastbg.timestamp) / 1000);
                         } else {
-                            Log.i(TAG, "COULD NOT GET LAST BG READING FOR PREDICTION!!!");
+                            Log.i(TAG, "Could not get any glucose reading for prediction anchor");
                         }
                     } catch (Exception e) {
                         // could not get a bg reading
@@ -1822,7 +1820,7 @@ public class BgGraphBuilder {
                         Log.d(TAG, "initial Fuzzed end timestamp: " + android.text.format.DateFormat.format("yyyy-MM-dd HH:mm:ss", fuzzed_timestamp * FUZZER));
                     if (d)
                         Log.d(TAG, "initial Fuzzed start timestamp: " + android.text.format.DateFormat.format("yyyy-MM-dd HH:mm:ss", (long) start_time * FUZZER));
-                    if ((iobinfo != null) && (prediction_enabled) && (simulation_enabled)) {
+                    if ((iobinfo != null) && (prediction_enabled) && (simulation_enabled) && hasPredictionAnchor) {
                         boolean iob_shown_already = false;
                         final val polyForPrediction = poly;
                         final PredictiveSimulationEngine.MomentumPredictor momentumPredictor =
@@ -1920,15 +1918,15 @@ public class BgGraphBuilder {
                         }
                         if (d)
                             Log.i(TAG, "Size of iob: " + Integer.toString(iobinfo.size()) + " Predictive hours: " + Integer.toString(predictivehours)
-                                    + " Predicted end game change: " + JoH.qs(predictedbg - mylastbg.calculated_value_mmol())
-                                    + " Start bg: " + JoH.qs(mylastbg.calculated_value_mmol()) + " Predicted: " + JoH.qs(predictedbg));
+                                    + " Predicted end game change: " + JoH.qs(predictedbg - initial_predicted_bg)
+                                    + " Start bg: " + JoH.qs(initial_predicted_bg) + " Predicted: " + JoH.qs(predictedbg));
                         // calculate bolus or carb adjustment - these should have granularity for injection / pump and thresholds
                     } else {
-                        if (d) Log.i(TAG, "iobinfo was null");
+                        if (d) Log.i(TAG, "Skipping predictive simulation: iobinfo null, disabled, or no anchor");
                     }
 
                     double[] evaluation;
-                    if (prediction_enabled && simulation_enabled) {
+                    if (prediction_enabled && simulation_enabled && hasPredictionAnchor) {
                         // if (doMgdl) {
                         // These routines need to understand how the profile is defined to use native instead of scaled
                         evaluation = Profile.evaluateEndGameMmol(predictedbg, lasttimestamp * FUZZER, end_time * FUZZER);
@@ -1995,6 +1993,37 @@ public class BgGraphBuilder {
             // new only the last hour worth of data for this, simple mode should work for this calculation
             (new BgGraphBuilder(xdrip.getAppContext(), System.currentTimeMillis() - 60 * 60 * 1000, System.currentTimeMillis() + 5 * 60 * 1000, 24, true)).addBgReadingValues(true);
         }
+    }
+
+    private static final class PredictionAnchor {
+        final long timestampMs;
+        final double mgdl;
+        final String source;
+
+        PredictionAnchor(long timestampMs, double mgdl, String source) {
+            this.timestampMs = timestampMs;
+            this.mgdl = mgdl;
+            this.source = source;
+        }
+
+        double inDisplayUnits(boolean doMgdl) {
+            return doMgdl ? mgdl : mgdl * Constants.MGDL_TO_MMOLL;
+        }
+    }
+
+    private PredictionAnchor getLatestPredictionAnchor() {
+        final BgReading latestBg = (bgReadings == null || bgReadings.isEmpty()) ? null : bgReadings.get(0);
+        final BloodTest latestBloodTest = (bloodtests == null || bloodtests.isEmpty()) ? null : bloodtests.get(bloodtests.size() - 1);
+
+        if (latestBg == null && latestBloodTest == null) {
+            return null;
+        }
+
+        if (latestBloodTest != null && (latestBg == null || latestBloodTest.timestamp >= latestBg.timestamp)) {
+            return new PredictionAnchor(latestBloodTest.timestamp, latestBloodTest.mgdl, "blood test");
+        }
+
+        return new PredictionAnchor(latestBg.timestamp, latestBg.calculated_value, "sensor");
     }
 
     private PointValue bgReadingToPoint(BgReading bgReading) {
