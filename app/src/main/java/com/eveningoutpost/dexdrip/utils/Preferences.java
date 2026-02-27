@@ -1831,6 +1831,8 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
             bindPreferenceSummaryToValueAndRefreshPrediction(findPreference("xplus_insulin_dia"), this.prefs);
             bindPreferenceSummaryToValueAndRefreshPrediction(findPreference("xplus_liver_sensitivity"), this.prefs);
             bindPreferenceSummaryToValueAndRefreshPrediction(findPreference("xplus_liver_maximpact"), this.prefs);
+            bindPreferenceSummaryToValueAndRefreshPrediction(findPreference("fiasp_weibull_weight_kg"), this.prefs);
+            bindPreferenceSummaryToValueAndRefreshPrediction(findPreference("fiasp_weibull_dose_scale_u_per_kg_per_unit"), this.prefs);
 
             bindPreferenceSummaryToValue(findPreference("low_predict_alarm_level"));
             Profile.validateTargetRange();

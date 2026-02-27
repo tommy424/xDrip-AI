@@ -42,6 +42,10 @@ public class InsulinManager {
                         insulin = new LinearTrapezoidInsulin(d.name, d.displayName, d.PPN, d.concentration, d.Curve.data);
                         Log.d(TAG, "initialized linear trapezoid insulin " + d.displayName);
                         break;
+                    case "weibull":
+                        insulin = new WeibullInsulin(d.name, d.displayName, d.PPN, d.concentration, d.Curve.data);
+                        Log.d(TAG, "initialized weibull insulin " + d.displayName);
+                        break;
                     default:
                         Log.d(TAG, "UNKNOWN Curve-Type " + d.Curve.type);
                         return null;

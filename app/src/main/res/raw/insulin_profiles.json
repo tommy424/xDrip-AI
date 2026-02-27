@@ -2,7 +2,7 @@
   "profiles": [
     {
       "name": "FIASP",
-      "displayName": "FIASP (ultra fast acting)",
+      "displayName": "FIASP (ultra fast acting, trapezoid)",
       "concentration": "U100",
       "PPN": [
         "FIASP-U100"
@@ -13,6 +13,27 @@
           "onset": "2",
           "peak": "45",
           "duration": "300"
+        }
+      }
+    },
+    {
+      "name": "FIASP-WEIBULL",
+      "displayName": "FIASP (ultra fast acting, Weibull)",
+      "concentration": "U100",
+      "PPN": [
+        "FIASP-U100-WEIBULL"
+      ],
+      "Curve": {
+        "type": "weibull",
+        "data": {
+          "duration": "360",
+          "k": "1.74176863",
+          "lambda_a": "112.623112",
+          "lambda_b": "210.417362",
+          "amp_c": "5602.19333",
+          "amp_p": "0.88484427",
+          "lag_u": "7.34062613",
+          "lag_v": "-9.80150106"
         }
       }
     },

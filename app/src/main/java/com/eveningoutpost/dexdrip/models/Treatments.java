@@ -885,8 +885,9 @@ public class Treatments extends Model {
 
             for (final InsulinInjection injection : injectionsList)
                 if (injection.getUnits() > 0 && (useBasal || !injection.isBasal())) {
-                    iobContrib += injection.getUnits() * abs(injection.getProfile().calculateIOB((time - treatment.timestamp) / MINUTE_IN_MS));
-                    activityContrib += injection.getUnits() * abs(injection.getProfile().calculateActivity((time - treatment.timestamp) / MINUTE_IN_MS));
+                    final long minutesSinceDose = (time - treatment.timestamp) / MINUTE_IN_MS;
+                    iobContrib += injection.getProfile().calculateIOBContribution(minutesSinceDose, injection.getUnits());
+                    activityContrib += injection.getProfile().calculateActivityContribution(minutesSinceDose, injection.getUnits());
                 }
             if (iobContrib < 0) iobContrib = 0;
             if (activityContrib < 0) activityContrib = 0;

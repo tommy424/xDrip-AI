@@ -810,6 +810,16 @@
                     android:key="multiple_insulin_use_basal_activity"
                     android:summary="@string/summary_multiple_insulin_use_basal_activity"
                     android:title="@string/title_multiple_insulin_use_basal_activity"/>
+                <EditTextPreference
+                    android:defaultValue=""
+                    android:key="fiasp_weibull_weight_kg"
+                    android:summary="@string/summary_fiasp_weibull_weight_kg"
+                    android:title="@string/title_fiasp_weibull_weight_kg" />
+                <EditTextPreference
+                    android:defaultValue=""
+                    android:key="fiasp_weibull_dose_scale_u_per_kg_per_unit"
+                    android:summary="@string/summary_fiasp_weibull_dose_scale_u_per_kg_per_unit"
+                    android:title="@string/title_fiasp_weibull_dose_scale_u_per_kg_per_unit" />
             </PreferenceScreen>
 
             <Preference

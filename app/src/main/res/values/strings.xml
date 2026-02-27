@@ -1762,6 +1762,10 @@
     <string name="title_multiple_insulin_types">Enable Multiple Insulin Types</string>
     <string name="summary_multiple_insulin_use_basal_activity">Plot Basal activity on graph and incorporate in predictive model</string>
     <string name="title_multiple_insulin_use_basal_activity">Use Basal Activity</string>
+    <string name="title_fiasp_weibull_weight_kg">FIASP Weibull Weight (kg)</string>
+    <string name="summary_fiasp_weibull_weight_kg">Optional body weight for dose-dependent FIASP. Leave blank to auto-estimate from DIA and sensitivity.</string>
+    <string name="title_fiasp_weibull_dose_scale_u_per_kg_per_unit">FIASP Weibull Dose Scale (U/kg per U)</string>
+    <string name="summary_fiasp_weibull_dose_scale_u_per_kg_per_unit">Advanced override. Leave blank to derive from weight or DIA and sensitivity.</string>
     <string name="title_xdrip_plus_snooze_broadcast">Local Broadcast</string>
     <string name="summary_broadcast_snooze">Send snoozes to other apps on this handset</string>
     <string name="title_broadcast_snooze">Local Broadcast</string>

@@ -78,4 +78,18 @@ public abstract class Insulin {
     public double calculateActivity(long time) {
         return -1;
     }
+
+    /**
+     * Dose-aware IOB contribution in units. Default behavior keeps legacy linear scaling.
+     */
+    public double calculateIOBContribution(final long time, final double doseUnits) {
+        return doseUnits * Math.abs(calculateIOB(time));
+    }
+
+    /**
+     * Dose-aware activity contribution. Default behavior keeps legacy linear scaling.
+     */
+    public double calculateActivityContribution(final long time, final double doseUnits) {
+        return doseUnits * Math.abs(calculateActivity(time));
+    }
 }
